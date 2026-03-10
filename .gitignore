@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local dev server logs
+*.log
+
+# Dependency dirs (if ever added)
+node_modules/
+
+# Env / secrets
+.env
+.env.local
