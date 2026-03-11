@@ -41,10 +41,17 @@ export async function renderArmorDetail(id) {
                        JOIN items i ON a._id = i._id WHERE a._id = ?`, [id]);
   if (!a) return { title: 'Not Found', html: '<div class="empty-state"><p>Armor not found.</p></div>' };
 
-  const skills = query(`SELECT st.name, its.point_value
+  const skills = query(`SELECT st._id, st.name, its.point_value
                          FROM item_to_skill_tree its
                          JOIN skill_trees st ON its.skill_tree_id = st._id
                          WHERE its.item_id = ?`, [id]);
+
+  // Set pieces: armor pieces have consecutive IDs in sets of 5 (Head+0..Legs+4)
+  // Find the set base by rounding down to nearest multiple of 5 (offset from 1)
+  const setBase = id - ((id - 1) % 5);
+  const setPieces = query(`SELECT a._id, a.slot, i.name, i.rarity FROM armor a
+                            JOIN items i ON a._id = i._id
+                            WHERE a._id >= ? AND a._id < ? ORDER BY a._id`, [setBase, setBase + 5]);
 
   const components = query(`SELECT c.quantity, c.type, i.name, i.icon_name
                              FROM components c JOIN items i ON c.component_item_id = i._id
@@ -74,11 +81,13 @@ export async function renderArmorDetail(id) {
     <div class="detail-section">
       <div class="detail-section-title">Resistances</div>
       <div class="card">
-        ${[['🔥 Fire', a.fire_res],['💧 Water', a.water_res],['⚡ Thunder', a.thunder_res],['❄️ Ice', a.ice_res],['🐉 Dragon', a.dragon_res]].map(([label, val]) => `
-          <div class="stat-row">
-            <span class="stat-label">${label}</span>
-            <span class="stat-value ${resClass(val)}">${val > 0 ? '+' : ''}${val}</span>
-          </div>`).join('')}
+        <div class="resist-row">
+          ${[['Fire','fire',a.fire_res],['Water','water',a.water_res],['Thunder','thunder',a.thunder_res],['Ice','ice',a.ice_res],['Dragon','dragon',a.dragon_res]].map(([label, key, val]) => `
+            <div class="resist-cell">
+              <img src="icons/icons_monster_info/${label}.png" alt="${label}" class="resist-icon">
+              <span class="${resClass(val)}">${val > 0 ? '+' : ''}${val}</span>
+            </div>`).join('')}
+        </div>
       </div>
     </div>
 
@@ -87,9 +96,9 @@ export async function renderArmorDetail(id) {
       <div class="detail-section-title">Skills</div>
       <div class="card">
         ${skills.map(s => `
-          <div class="stat-row">
-            <span class="stat-label">${esc(s.name)}</span>
-            <span class="stat-value ${ptsClass(s.point_value)}">${s.point_value > 0 ? '+' : ''}${s.point_value}</span>
+          <div class="list-item" data-nav="/skills/${s._id}">
+            <div class="list-item-info"><div class="list-item-name">${esc(s.name)}</div></div>
+            <span class="${ptsClass(s.point_value)}" style="font-weight:700">${s.point_value > 0 ? '+' : ''}${s.point_value}</span>
           </div>`).join('')}
       </div>
     </div>` : ''}
@@ -106,6 +115,22 @@ export async function renderArmorDetail(id) {
               <div class="list-item-sub">${esc(c.type)}</div>
             </div>
             <span style="font-weight:600">×${c.quantity}</span>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${setPieces.length > 1 ? `
+    <div class="detail-section">
+      <div class="detail-section-title">Set Pieces</div>
+      <div class="card">
+        ${setPieces.map(p => `
+          <div class="list-item ${p._id === id ? '' : ''}" data-nav="/armor/${p._id}" ${p._id === id ? 'style="background:var(--surface2)"' : ''}>
+            ${img(armorIconPath(p.slot, p.rarity), p.name)}
+            <div class="list-item-info">
+              <div class="list-item-name">${esc(p.name)}</div>
+              <div class="list-item-sub">${esc(p.slot)}</div>
+            </div>
+            ${p._id === id ? '<span style="color:var(--accent);font-weight:700">✓</span>' : '<span class="list-arrow">›</span>'}
           </div>`).join('')}
       </div>
     </div>` : ''}`;

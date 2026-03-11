@@ -11,13 +11,8 @@ function saveTalismans(list) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
-export async function renderTalismans() {
-  const skillTrees = query('SELECT _id, name FROM skill_trees ORDER BY name');
-  const talismans = loadTalismans();
-
-  const skillOptions = skillTrees.map(s => `<option value="${s._id}">${esc(s.name)}</option>`).join('');
-
-  const talismanCards = talismans.length
+function talismanCards(talismans) {
+  return talismans.length
     ? talismans.map((t, idx) => `
         <div class="talisman-card">
           <div class="talisman-header">
@@ -40,10 +35,16 @@ export async function renderTalismans() {
           </div>
         </div>`)
       .join('')
-    : '<div class="empty-state"><div class="es-icon">🔮</div><h2>No Talismans</h2><p>Add your talismans to track their skills and slots.</p></div>';
+    : '<div class="empty-state"><div class="es-icon"><img src="icons/icons_items/Talisman-Orange.png" alt="" style="width:64px;height:64px;object-fit:contain;opacity:.7;display:block;margin:0 auto"></div><h2>No Talismans</h2><p>Add your talismans to track their skills and slots.</p></div>';
+}
+
+export async function renderTalismans() {
+  const skillTrees = query('SELECT _id, name FROM skill_trees ORDER BY name');
+
+  const skillOptions = skillTrees.map(s => `<option value="${s._id}">${esc(s.name)}</option>`).join('');
 
   const html = `
-    <div id="talisman-list">${talismanCards}</div>
+    <div id="talisman-list">${talismanCards(loadTalismans())}</div>
     <button class="btn btn-primary" id="add-talisman-btn" style="width:100%;margin-top:12px">+ Add Talisman</button>
 
     <div id="talisman-form" style="display:none;margin-top:16px" class="card" style="padding:16px">
@@ -72,7 +73,7 @@ export async function renderTalismans() {
           </div>
           <div class="form-group" style="max-width:100px">
             <label class="form-label">Points</label>
-            <input type="number" class="form-input" id="t-pts1" value="0" min="-10" max="10">
+            <input type="number" class="form-input" id="t-pts1" value="0" min="-15" max="15">
           </div>
         </div>
 
@@ -87,7 +88,7 @@ export async function renderTalismans() {
           </div>
           <div class="form-group" style="max-width:100px">
             <label class="form-label">Points</label>
-            <input type="number" class="form-input" id="t-pts2" value="0" min="-10" max="10">
+            <input type="number" class="form-input" id="t-pts2" value="0" min="-15" max="15">
           </div>
         </div>
 
@@ -122,6 +123,11 @@ export async function renderTalismans() {
         document.getElementById('add-talisman-btn').style.display = '';
       }
 
+      function refreshList() {
+        document.getElementById('talisman-list').innerHTML = talismanCards(loadTalismans());
+        bindListEvents();
+      }
+
       function saveForm() {
         const skill1Sel = document.getElementById('t-skill1');
         const skill2Sel = document.getElementById('t-skill2');
@@ -143,32 +149,28 @@ export async function renderTalismans() {
         else talismans.push(talisman);
         saveTalismans(talismans);
 
-        // Re-render list
-        window.location.hash = '/talismans';
+        closeForm();
+        refreshList();
+      }
+
+      function bindListEvents() {
+        document.querySelectorAll('[data-delete]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const talismans = loadTalismans();
+            talismans.splice(+btn.dataset.delete, 1);
+            saveTalismans(talismans);
+            refreshList();
+          });
+        });
+        document.querySelectorAll('[data-edit]').forEach(btn => {
+          btn.addEventListener('click', () => openForm(loadTalismans()[+btn.dataset.edit], +btn.dataset.edit));
+        });
       }
 
       document.getElementById('add-talisman-btn').addEventListener('click', () => openForm(null, null));
       document.getElementById('save-talisman-btn').addEventListener('click', saveForm);
       document.getElementById('cancel-talisman-btn').addEventListener('click', closeForm);
-
-      // Delete / edit
-      document.querySelectorAll('[data-delete]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = +btn.dataset.delete;
-          const talismans = loadTalismans();
-          talismans.splice(idx, 1);
-          saveTalismans(talismans);
-          window.location.hash = '';
-          window.location.hash = '/talismans';
-        });
-      });
-
-      document.querySelectorAll('[data-edit]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = +btn.dataset.edit;
-          openForm(loadTalismans()[idx], idx);
-        });
-      });
+      bindListEvents();
     }
   };
 }

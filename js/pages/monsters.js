@@ -2,7 +2,7 @@ import { query, queryOne } from '../db.js';
 import { esc, monsterIconPath, img, elementBadge, effLabel, trapLabel, pctBar, groupBy } from './utils.js';
 
 export async function renderMonsterList() {
-  const monsters = query('SELECT _id, name, class, icon_name FROM monsters ORDER BY class DESC, sort_name');
+  const monsters = query('SELECT _id, name, class, icon_name, trait FROM monsters ORDER BY class DESC, sort_name');
   const html = `
     <div class="search-wrap">
       <input class="search-input" data-search="monsters" placeholder="Search monsters…" type="search" autocomplete="off">
@@ -25,7 +25,10 @@ export async function renderMonsterList() {
           ${img(monsterIconPath(m.icon_name), m.name)}
           <div class="list-item-info">
             <div class="list-item-name">${esc(m.name)}</div>
-            <div class="list-item-sub"><span class="badge ${m.class === 'Boss' ? 'badge-boss' : 'badge-minion'}">${m.class === 'Boss' ? 'Large Monster' : 'Small Monster'}</span></div>
+            <div class="list-item-sub">
+              <span class="badge ${m.class === 'Boss' ? 'badge-boss' : 'badge-minion'}">${m.class === 'Boss' ? 'Large Monster' : 'Small Monster'}</span>
+              ${m.trait ? `<span style="color:var(--text-muted);font-size:12px">${esc(m.trait)}</span>` : ''}
+            </div>
           </div>
           <span class="list-arrow">›</span>
         </div>`).join('')}
@@ -47,15 +50,30 @@ export async function renderMonsterDetail(id) {
   const rewards    = query(`SELECT hr.condition, hr.rank, hr.stack_size, hr.percentage, hr.item_id, i.name, i.icon_name
                              FROM hunting_rewards hr JOIN items i ON hr.item_id = i._id
                              WHERE hr.monster_id = ? ORDER BY hr.rank, hr.condition, hr.percentage DESC`, [id]);
+  const quests     = query(`SELECT q._id, q.name, q.hub, q.type, q.stars, mtq.unstable
+                             FROM monster_to_quest mtq JOIN quests q ON mtq.quest_id = q._id
+                             WHERE mtq.monster_id = ? ORDER BY q.hub, q.stars, q.name`, [id]);
 
-  // Weakness tabs
-  const states = [...new Set(weaknesses.map(w => w.state))];
-  const weaknessTabs = states.map((state, idx) => {
+  // Weakness tabs — collapse Normal+Enraged into one if they have identical values
+  const WEAK_FIELDS = ['fire','water','thunder','ice','dragon','poison','paralysis','sleep','pitfall_trap','shock_trap','flash_bomb','sonic_bomb','dung_bomb','meat'];
+  function weakKey(w) { return WEAK_FIELDS.map(f => w[f]).join(','); }
+  const allStates = [...new Set(weaknesses.map(w => w.state))];
+  let states = allStates;
+  let collapsedLabel = null;
+  if (allStates.length === 2) {
+    const [a, b] = allStates.map(s => weaknesses.find(x => x.state === s));
+    if (a && b && weakKey(a) === weakKey(b)) {
+      states = [allStates[0]];
+      collapsedLabel = 'Normal + Enraged';
+    }
+  }
+
+  const weaknessTabs = states.length > 1 ? states.map((state, idx) => {
     const w = weaknesses.find(x => x.state === state);
     if (!w) return '';
     return `
       <div class="tab ${idx === 0 ? 'active' : ''}" data-tab-group="weak" data-tab-id="${state}">${state}</div>`;
-  }).join('');
+  }).join('') : '';
 
   const weaknessPanels = states.map((state, idx) => {
     const w = weaknesses.find(x => x.state === state);
@@ -197,37 +215,68 @@ export async function renderMonsterDetail(id) {
 
   // Rewards by rank
   const rankRewards = groupBy(rewards, r => r.rank);
-  const ranks = ['LR', 'HR', 'G'];
-  const availableRanks = ranks.filter(r => rankRewards[r]);
+  const availableRanks = ['LR', 'HR', 'G'].filter(r => rankRewards[r]);
+  const savedRewardRank = localStorage.getItem(`filter:monster-rewards-${id}:reward-rank`);
+  const defaultRewardRank = (savedRewardRank && availableRanks.includes(savedRewardRank)) ? savedRewardRank : availableRanks[0];
   const rewardsHtml = availableRanks.length ? `
     <div class="detail-section">
       <div class="detail-section-title">Rewards</div>
-      <div class="tabs">
-        ${availableRanks.map((r, i) => `
-          <div class="tab ${i === 0 ? 'active' : ''}" data-tab-group="rewards" data-tab-id="${r}">${r} Rank</div>`).join('')}
+      <div class="filter-bar">
+        ${availableRanks.map(r => `<div class="chip ${r === defaultRewardRank ? 'active' : ''}" data-filter="${r}" data-filter-group="reward-rank" data-filter-target="monster-rewards-${id}">${r} Rank</div>`).join('')}
       </div>
-      ${availableRanks.map((rank, i) => {
+      ${availableRanks.map(rank => {
         const byCondition = groupBy(rankRewards[rank], r => r.condition);
-        return `
-          <div class="tab-panel" data-tab-group="rewards" data-tab-id="${rank}" ${i > 0 ? 'style="display:none"' : ''}>
-            ${Object.entries(byCondition).map(([cond, items]) => `
-              <div class="detail-section-title" style="margin-top:12px">${esc(cond)}</div>
-              <div class="card" style="margin-bottom:12px">
-                ${items.map(r => `
-                  <div class="list-item" data-nav="/items/${r.item_id}">
-                    ${img('icons/icons_items/' + r.icon_name, r.name)}
-                    <div class="list-item-info">
-                      <div class="list-item-name">${esc(r.name)}</div>
-                      <div class="list-item-sub">x${r.stack_size}</div>
-                    </div>
-                    <div style="text-align:right;min-width:48px">
-                      <div style="font-weight:600">${r.percentage}%</div>
-                      ${pctBar(r.percentage)}
-                    </div>
-                  </div>`).join('')}
-              </div>`).join('')}
-          </div>`;
+        return Object.entries(byCondition).map(([cond, items]) => `
+          <div data-filterable="monster-rewards-${id}" data-filter-value="${rank}" ${rank !== defaultRewardRank ? 'style="display:none"' : ''}>
+            <div class="detail-section-title" style="margin-top:12px">${esc(cond)}</div>
+            <div class="card" style="margin-bottom:12px">
+              ${items.map(r => `
+                <div class="list-item" data-nav="/items/${r.item_id}">
+                  ${img('icons/icons_items/' + r.icon_name, r.name)}
+                  <div class="list-item-info">
+                    <div class="list-item-name">${esc(r.name)}</div>
+                    <div class="list-item-sub">x${r.stack_size}</div>
+                  </div>
+                  <div style="text-align:right;min-width:48px">
+                    <div style="font-weight:600">${r.percentage}%</div>
+                    ${pctBar(r.percentage)}
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`).join('');
       }).join('')}
+    </div>` : '';
+
+  const hubOrder = ['Caravan', 'Guild', 'Event'];
+  const questHubs = hubOrder.filter(h => quests.some(q => q.hub === h));
+  const defaultQuestHub = questHubs.length === 1 ? questHubs[0] : 'all';
+  const questFilterTarget = `monster-quests-${id}`;
+  const questsHtml = quests.length ? `
+    <div class="detail-section">
+      <div class="detail-section-title">Quests</div>
+      ${questHubs.length > 1 ? `<div class="filter-bar">
+        <div class="chip ${defaultQuestHub === 'all' ? 'active' : ''}" data-filter="all" data-filter-group="hub" data-filter-target="${questFilterTarget}">All</div>
+        ${questHubs.map(h => `<div class="chip ${defaultQuestHub === h ? 'active' : ''}" data-filter="${esc(h)}" data-filter-group="hub" data-filter-target="${questFilterTarget}">${esc(h)}</div>`).join('')}
+      </div>` : ''}
+      <div class="card">
+        ${quests.map(q => `
+          <div class="list-item"
+            data-nav="/quests/${q._id}"
+            data-filterable="${questFilterTarget}"
+            data-filter-value="${esc(q.hub)}"
+            ${(defaultQuestHub !== 'all' && q.hub !== defaultQuestHub) ? 'style="display:none"' : ''}>
+            <div class="list-item-info">
+              <div class="list-item-name">${esc(q.name)}</div>
+              <div class="list-item-sub" style="gap:4px;display:flex;flex-wrap:wrap">
+                <span class="badge ${q.hub === 'Guild' ? 'badge-gold' : q.hub === 'Event' ? 'badge-green' : 'badge-blue'}">${esc(q.hub)}</span>
+                <span class="badge badge-gold">${q.stars}★</span>
+                <span class="badge ${q.type === 'Key' ? 'badge-red' : q.type === 'Urgent' ? 'badge-orange' : 'badge-default'}">${esc(q.type)}</span>
+                ${q.unstable === 'yes' ? '<span class="badge badge-default">Unstable</span>' : ''}
+              </div>
+            </div>
+            <span class="list-arrow">›</span>
+          </div>`).join('')}
+      </div>
     </div>` : '';
 
   const html = `
@@ -249,8 +298,8 @@ export async function renderMonsterDetail(id) {
 
     ${weaknesses.length ? `
     <div class="detail-section">
-      <div class="detail-section-title">Weaknesses</div>
-      <div class="tabs">${weaknessTabs}</div>
+      <div class="detail-section-title">${collapsedLabel ? esc(collapsedLabel) + ' Weaknesses' : 'Weaknesses'}</div>
+      ${weaknessTabs ? `<div class="tabs">${weaknessTabs}</div>` : ''}
       <div class="card" style="padding:0;overflow:hidden">${weaknessPanels}</div>
     </div>` : ''}
 
@@ -288,6 +337,7 @@ export async function renderMonsterDetail(id) {
 
     ${hitzoneHtml}
     ${habitatHtml}
+    ${questsHtml}
     ${rewardsHtml}`;
 
   return { title: m.name, html };

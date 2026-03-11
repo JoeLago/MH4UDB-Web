@@ -43,7 +43,7 @@ export async function renderItemList() {
           ${img(itemIconPath(i.icon_name), i.name)}
           <div class="list-item-info">
             <div class="list-item-name">${esc(i.name)}</div>
-            <div class="list-item-sub">${esc(i.type)}${i.sub_type ? ' · ' + esc(i.sub_type) : ''}</div>
+            <div class="list-item-sub">${esc(i.type)}${i.sub_type ? ' · ' + esc(i.sub_type) : ''}${i.rarity ? ` · R${i.rarity}` : ''}</div>
           </div>
           <span class="list-arrow">›</span>
         </div>`).join('')}
@@ -82,7 +82,7 @@ export async function renderItemDetail(id) {
 
   const questRewards = query(`SELECT qr.stack_size, qr.percentage, qr.reward_slot, q.name as quest_name, q._id as quest_id, q.hub, q.stars
                                FROM quest_rewards qr JOIN quests q ON qr.quest_id = q._id
-                               WHERE qr.item_id = ? ORDER BY qr.percentage DESC LIMIT 20`, [id]);
+                               WHERE qr.item_id = ? ORDER BY q.hub, q.stars, q.name, qr.reward_slot`, [id]);
 
   const html = `
     <div class="detail-header">
@@ -124,17 +124,25 @@ export async function renderItemDetail(id) {
       </div>
     </div>` : ''}
 
-    ${monsterSources.length ? `
+    ${monsterSources.length ? (() => {
+      const byRank = groupBy(monsterSources, s => s.rank);
+      const allRanks = ['LR','HR','G'].filter(r => byRank[r]);
+      const savedMsrcRank = localStorage.getItem('filter:item-msrc:rank');
+      const defaultMsrcRank = (savedMsrcRank && allRanks.includes(savedMsrcRank)) ? savedMsrcRank : allRanks[0];
+      return `
     <div class="detail-section">
       <div class="detail-section-title">Monster Sources</div>
+      ${allRanks.length > 1 ? `<div class="filter-bar">
+        ${allRanks.map(r => `<div class="chip ${r === defaultMsrcRank ? 'active' : ''}" data-filter="${r}" data-filter-group="rank" data-filter-target="item-msrc">${r} Rank</div>`).join('')}
+      </div>` : ''}
       <div class="card">
-        ${monsterSources.map(s => `
-          <div class="list-item" data-nav="/monsters/${s.monster_id}">
+        ${allRanks.map(rank => byRank[rank].map(s => `
+          <div class="list-item" data-nav="/monsters/${s.monster_id}"
+            ${allRanks.length > 1 ? `data-filterable="item-msrc" data-filter-value="${rank}" ${rank !== defaultMsrcRank ? 'style="display:none"' : ''}` : ''}>
             ${img(`icons/icons_monster/${s.monster_icon}`, s.monster_name)}
             <div class="list-item-info">
               <div class="list-item-name">${esc(s.monster_name)}</div>
               <div class="list-item-sub" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:2px">
-                ${rankBadge(s.rank)}
                 ${conditionBadge(s.condition)}
                 <span style="color:var(--text-muted)">×${s.stack_size}</span>
               </div>
@@ -143,27 +151,38 @@ export async function renderItemDetail(id) {
               <div style="font-weight:600">${s.percentage}%</div>
               ${pctBar(s.percentage)}
             </div>
-          </div>`).join('')}
+          </div>`).join('')).join('')}
       </div>
-    </div>` : ''}
+    </div>`;
+    })() : ''}
 
-    ${gathering.length ? `
+    ${gathering.length ? (() => {
+      const byRank = groupBy(gathering, g => g.rank);
+      const allRanks = ['LR','HR','G'].filter(r => byRank[r]);
+      const savedGathRank = localStorage.getItem('filter:item-gath:rank');
+      const defaultGathRank = (savedGathRank && allRanks.includes(savedGathRank)) ? savedGathRank : allRanks[0];
+      return `
     <div class="detail-section">
       <div class="detail-section-title">Gathering</div>
+      ${allRanks.length > 1 ? `<div class="filter-bar">
+        ${allRanks.map(r => `<div class="chip ${r === defaultGathRank ? 'active' : ''}" data-filter="${r}" data-filter-group="rank" data-filter-target="item-gath">${r} Rank</div>`).join('')}
+      </div>` : ''}
       <div class="card">
-        ${gathering.map(g => `
-          <div class="list-item" data-nav="/locations/${g.location_id}">
+        ${allRanks.map(rank => byRank[rank].map(g => `
+          <div class="list-item" data-nav="/locations/${g.location_id}"
+            ${allRanks.length > 1 ? `data-filterable="item-gath" data-filter-value="${rank}" ${rank !== defaultGathRank ? 'style="display:none"' : ''}` : ''}>
             <div class="list-item-info">
               <div class="list-item-name">${esc(g.location_name)}</div>
-              <div class="list-item-sub">Area ${esc(g.area)} · ${esc(g.site)} · ${esc(g.rank)} · x${g.quantity}</div>
+              <div class="list-item-sub">Area ${esc(g.area)} · ${esc(g.site)} · x${g.quantity}</div>
             </div>
             <div style="text-align:right;min-width:48px">
               <div style="font-weight:600">${g.percentage}%</div>
               ${pctBar(g.percentage)}
             </div>
-          </div>`).join('')}
+          </div>`).join('')).join('')}
       </div>
-    </div>` : ''}
+    </div>`;
+    })() : ''}
 
     ${craftingUses.length ? `
     <div class="detail-section">

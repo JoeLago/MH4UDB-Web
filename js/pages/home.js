@@ -115,7 +115,6 @@ export async function renderHome() {
     { id: 'wyporium',     icon: hcImg('icons/icons_items/Ticket-Gold.png'),                                         label: 'Wyporium',     count: counts.wyporium },
     { id: 'veggie-elder', icon: hcImg('icons/icons_items/Sprout.png'),                                              label: 'Veggie Elder', count: counts.veggie },
     { id: 'armor-search', icon: hcImg('icons/icons_items/Charm-Stone-Orange.png'),                                  label: 'Armor Search', count: null },
-    { id: 'talismans',    icon: hcImg('icons/icons_items/Talisman-Orange.png'),                                     label: 'Talismans',    count: null },
   ];
 
   const html = `

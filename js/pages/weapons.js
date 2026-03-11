@@ -132,10 +132,19 @@ export async function renderWeaponDetail(idOrType) {
   const melodiesHtml = melodies.length ? `
     <div class="detail-section">
       <div class="detail-section-title">Melodies</div>
-      <div class="table-wrap">
-        <table><thead><tr>${Object.keys(melodies[0]).filter(k=>k!=='_id'&&k!=='weapon_id').map(k=>`<th>${esc(k)}</th>`).join('')}</tr></thead>
-        <tbody>${melodies.map(row => `<tr>${Object.entries(row).filter(([k])=>k!=='_id'&&k!=='weapon_id').map(([,v])=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>
-        </table>
+      <div class="card">
+        ${melodies.map(m => `
+          <div class="list-item" style="cursor:default;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 16px">
+            <div style="display:flex;align-items:center;gap:6px">
+              ${hornNoteCircles(m.notes || '')}
+            </div>
+            <div style="font-size:13px;color:var(--text)">${esc(m.effect1 || '')}</div>
+            ${m.effect2 && m.effect2 !== 'N/A' ? `<div style="font-size:12px;color:var(--text-muted)">${esc(m.effect2)}</div>` : ''}
+            <div style="display:flex;gap:12px;font-size:11px;color:var(--text-dim)">
+              ${m.duration && m.duration !== 'N/A' ? `<span>Duration: ${esc(m.duration)}</span>` : ''}
+              ${m.extension && m.extension !== 'N/A' ? `<span>Extension: ${esc(m.extension)}</span>` : ''}
+            </div>
+          </div>`).join('')}
       </div>
     </div>` : '';
 
@@ -171,7 +180,7 @@ export async function renderWeaponDetail(idOrType) {
 
 async function renderWeaponTree(wtype) {
   const weapons = query(`SELECT w._id, w.parent_id, w.wtype, w.attack, w.element, w.element_attack,
-                          w.awaken, w.awaken_attack, w.num_slots, w.tree_depth, w.final, w.sharpness, w.affinity,
+                          w.awaken, w.awaken_attack, w.num_slots, w.tree_depth, w.final, w.sharpness, w.affinity, w.horn_notes,
                           i.name, i.rarity
                           FROM weapons w JOIN items i ON w._id = i._id
                           WHERE w.wtype = ? ORDER BY w._id`, [wtype]);
@@ -196,7 +205,9 @@ async function renderWeaponTree(wtype) {
               <div class="tree-node-stats">
                 <span>ATK ${w.attack}</span>
                 ${elemStr}${awakenStr}
-                <span>${'◯'.repeat(w.num_slots || 0)}</span>
+                ${w.affinity ? `<span style="color:${+w.affinity > 0 ? '#27ae60' : '#e74c3c'};font-weight:600">${+w.affinity > 0 ? '+' : ''}${w.affinity}%</span>` : ''}
+                ${w.num_slots ? `<span>${'◯'.repeat(w.num_slots)}</span>` : ''}
+                ${w.horn_notes ? hornNoteCircles(w.horn_notes) : ''}
               </div>
             </div>
             <span class="list-arrow">›</span>

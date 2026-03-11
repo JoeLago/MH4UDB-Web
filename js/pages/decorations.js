@@ -2,8 +2,13 @@ import { query, queryOne } from '../db.js';
 import { esc, itemIconPath, img, slots, ptsClass } from './utils.js';
 
 export async function renderDecorationList() {
-  const decs = query(`SELECT d._id, d.num_slots, i.name, i.rarity, i.icon_name
-                       FROM decorations d JOIN items i ON d._id = i._id ORDER BY d.num_slots, i.name`);
+  const decs = query(`SELECT d._id, d.num_slots, i.name, i.rarity, i.icon_name,
+    COALESCE(GROUP_CONCAT(st.name, ', '), '') as skills_preview
+    FROM decorations d
+    JOIN items i ON d._id = i._id
+    LEFT JOIN item_to_skill_tree itst ON itst.item_id = d._id
+    LEFT JOIN skill_trees st ON itst.skill_tree_id = st._id
+    GROUP BY d._id ORDER BY d.num_slots, i.name`);
 
   const html = `
     <div class="search-wrap">
@@ -27,7 +32,7 @@ export async function renderDecorationList() {
           ${img(itemIconPath(d.icon_name), d.name)}
           <div class="list-item-info">
             <div class="list-item-name">${esc(d.name)}</div>
-            <div class="list-item-sub">Slot ${d.num_slots} · ★${d.rarity}</div>
+            <div class="list-item-sub">Slot ${d.num_slots} · ★${d.rarity}${d.skills_preview ? ' · ' + esc(d.skills_preview) : ''}</div>
           </div>
           <span class="list-arrow">›</span>
         </div>`).join('')}

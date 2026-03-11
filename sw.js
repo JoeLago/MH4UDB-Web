@@ -1,28 +1,7 @@
-const CACHE = 'mh4u-v1';
+const CACHE = 'mh4u-v2';
 
-const PRECACHE = [
-  './',
-  './index.html',
-  './manifest.json',
-  './css/main.css',
-  './js/app.js',
-  './js/db.js',
-  './js/router.js',
-  './js/pages/home.js',
-  './js/pages/monsters.js',
-  './js/pages/weapons.js',
-  './js/pages/armor.js',
-  './js/pages/items.js',
-  './js/pages/quests.js',
-  './js/pages/locations.js',
-  './js/pages/decorations.js',
-  './js/pages/skills.js',
-  './js/pages/combining.js',
-  './js/pages/canteen.js',
-  './js/pages/wyporium.js',
-  './js/pages/veggie-elder.js',
-  './js/pages/armor-search.js',
-  './js/pages/talismans.js',
+// Large/static assets — cache-first (offline-first, rarely change)
+const PRECACHE_ASSETS = [
   './mh4u.db',
   'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js',
   'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.wasm',
@@ -30,7 +9,7 @@ const PRECACHE = [
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE).then(cache => cache.addAll(PRECACHE_ASSETS)).then(() => self.skipWaiting())
   );
 });
 
@@ -42,18 +21,44 @@ self.addEventListener('activate', e => {
   );
 });
 
+// Returns true for large assets that should be cache-first
+function isCacheFirst(url) {
+  return url.includes('mh4u.db') ||
+         url.includes('sql-wasm') ||
+         url.includes('/icons/');
+}
+
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(res => {
+
+  const url = e.request.url;
+
+  if (isCacheFirst(url)) {
+    // Cache-first: return cached immediately, update cache in background
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        const networkFetch = fetch(e.request).then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE).then(cache => cache.put(e.request, clone));
+          }
+          return res;
+        });
+        return cached || networkFetch;
+      })
+    );
+  } else {
+    // Network-first: always try network, fall back to cache when offline
+    e.respondWith(
+      fetch(e.request).then(res => {
         if (res.ok) {
           const clone = res.clone();
           caches.open(CACHE).then(cache => cache.put(e.request, clone));
         }
         return res;
-      }).catch(() => cached || new Response('Offline', { status: 503 }));
-    })
-  );
+      }).catch(() =>
+        caches.match(e.request).then(cached => cached || new Response('Offline', { status: 503 }))
+      )
+    );
+  }
 });

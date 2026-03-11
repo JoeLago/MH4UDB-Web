@@ -5,7 +5,7 @@ import { renderMonsterList, renderMonsterDetail } from './pages/monsters.js';
 import { renderWeaponList, renderWeaponDetail } from './pages/weapons.js';
 import { renderArmorList, renderArmorDetail } from './pages/armor.js';
 import { renderItemList, renderItemDetail } from './pages/items.js';
-import { renderQuestList, renderQuestDetail } from './pages/quests.js';
+import { renderQuestList, renderQuestDetail, renderArenaQuestDetail } from './pages/quests.js';
 import { renderLocationList, renderLocationDetail } from './pages/locations.js';
 import { renderDecorationList, renderDecorationDetail } from './pages/decorations.js';
 import { renderSkillList, renderSkillDetail } from './pages/skills.js';
@@ -21,7 +21,7 @@ function navImg(src) {
 }
 
 const NAV_PRIMARY = [
-  { id: 'home',     label: 'Home',     icon: '🏠' },
+  { id: 'home',     label: 'Home',     icon: `<svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><polyline points="9 21 9 12 15 12 15 21"/></svg>` },
   { id: 'monsters', label: 'Monsters', icon: navImg('icons/icons_monster/MH4U-Rathalos_Icon.png') },
   { id: 'weapons',  label: 'Weapons',  icon: navImg('icons/icons_weapons/icons_great_sword/great_sword1.png') },
   { id: 'armor',    label: 'Armor',    icon: navImg('icons/icons_armor/icons_head/head1.png') },
@@ -39,7 +39,6 @@ const NAV_MORE = [
   { id: 'wyporium',     label: 'Wyporium',     icon: navImg('icons/icons_items/Ticket-Gold.png') },
   { id: 'veggie-elder', label: 'Veggie Elder', icon: navImg('icons/icons_items/Sprout.png') },
   { id: 'armor-search', label: 'Armor Search', icon: navImg('icons/icons_items/Charm-Stone-Orange.png') },
-  { id: 'talismans',    label: 'Talismans',    icon: navImg('icons/icons_items/Talisman-Orange.png') },
 ];
 
 const ALL_SECTIONS = [...NAV_PRIMARY.filter(n => n.id !== 'more'), ...NAV_MORE];
@@ -87,7 +86,8 @@ async function handleRoute({ section, id }) {
       case 'weapons':     result = id ? await renderWeaponDetail(isNaN(+id) ? decodeURIComponent(id) : +id) : await renderWeaponList(); break;
       case 'armor':       result = id ? await renderArmorDetail(+id)    : await renderArmorList();      break;
       case 'items':       result = id ? await renderItemDetail(+id)     : await renderItemList();       break;
-      case 'quests':      result = id ? await renderQuestDetail(+id)    : await renderQuestList();      break;
+      case 'quests':       result = id ? await renderQuestDetail(+id)    : await renderQuestList();      break;
+      case 'arena-quests': result = id ? await renderArenaQuestDetail(+id) : await renderQuestList(); break;
       case 'locations':   result = id ? await renderLocationDetail(+id) : await renderLocationList();   break;
       case 'decorations': result = id ? await renderDecorationDetail(+id) : await renderDecorationList(); break;
       case 'skills':      result = id ? await renderSkillDetail(+id)    : await renderSkillList();      break;
@@ -103,6 +103,7 @@ async function handleRoute({ section, id }) {
     document.getElementById('page-title').textContent = result.title;
     content.innerHTML = result.html;
     content.scrollTop = 0;
+    window.scrollTo(0, 0);
     bindPageEvents(section, id);
     if (result.afterRender) result.afterRender();
   } catch (e) {
@@ -116,15 +117,70 @@ function bindPageEvents(section, id) {
   document.querySelectorAll('[data-nav]').forEach(el =>
     el.addEventListener('click', () => navigate(el.dataset.nav)));
 
-  // Search filtering
+  // Filter chips (supports multiple groups per target with AND logic)
+  const activeFilters = {};
+  function applyFilters(target) {
+    const filters = activeFilters[target] || {};
+    document.querySelectorAll(`[data-filterable="${target}"]`).forEach(item => {
+      const visible = Object.entries(filters).every(([group, val]) => {
+        if (val === 'all') return true;
+        if (group === 'rank') return item.dataset.filterRank === val;
+        return item.dataset.filterValue === val;
+      });
+      item.style.display = visible ? '' : 'none';
+    });
+  }
+
+  // Initialize filter state from localStorage, falling back to active chip in HTML
+  const seenGroups = new Set();
+  document.querySelectorAll('.chip[data-filter-group]').forEach(chip => {
+    const g = chip.dataset.filterGroup;
+    const target = chip.dataset.filterTarget;
+    const key = `filter:${target}:${g}`;
+    if (seenGroups.has(key)) return;
+    seenGroups.add(key);
+    const saved = localStorage.getItem(key);
+    if (!activeFilters[target]) activeFilters[target] = {};
+    if (saved !== null) {
+      document.querySelectorAll(`.chip[data-filter-group="${g}"]`).forEach(c => c.classList.remove('active'));
+      const match = document.querySelector(`.chip[data-filter-group="${g}"][data-filter="${saved}"]`);
+      if (match) match.classList.add('active');
+      activeFilters[target][g] = saved;
+    } else {
+      const activeChip = document.querySelector(`.chip[data-filter-group="${g}"].active`);
+      activeFilters[target][g] = activeChip ? activeChip.dataset.filter : 'all';
+    }
+  });
+  // Apply initial filter state
+  [...new Set([...seenGroups].map(k => k.split(':')[1]))].forEach(applyFilters);
+
+  document.querySelectorAll('.chip[data-filter-group]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const g = chip.dataset.filterGroup;
+      const target = chip.dataset.filterTarget;
+      document.querySelectorAll(`.chip[data-filter-group="${g}"]`).forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      if (!activeFilters[target]) activeFilters[target] = {};
+      activeFilters[target][g] = chip.dataset.filter;
+      localStorage.setItem(`filter:${target}:${g}`, chip.dataset.filter);
+      applyFilters(target);
+    });
+  });
+
+  // Search filtering (ignores active filters — shows all text matches)
   document.querySelectorAll('[data-search]').forEach(input => {
     input.addEventListener('input', () => {
       const q = input.value.toLowerCase();
       const key = input.dataset.search;
-      document.querySelectorAll(`[data-searchable="${key}"]`).forEach(item => {
-        const text = (item.dataset.searchtext || item.textContent).toLowerCase();
-        item.style.display = text.includes(q) ? '' : 'none';
-      });
+      if (q) {
+        document.querySelectorAll(`[data-searchable="${key}"]`).forEach(item => {
+          const text = (item.dataset.searchtext || item.textContent).toLowerCase();
+          item.style.display = text.includes(q) ? '' : 'none';
+        });
+      } else {
+        document.querySelectorAll(`[data-searchable="${key}"]`).forEach(item => item.style.display = '');
+        applyFilters(key);
+      }
     });
   });
 
@@ -137,19 +193,6 @@ function bindPageEvents(section, id) {
       tab.classList.add('active');
       const panel = document.querySelector(`.tab-panel[data-tab-group="${g}"][data-tab-id="${tab.dataset.tabId}"]`);
       if (panel) panel.style.display = '';
-    });
-  });
-
-  // Filter chips
-  document.querySelectorAll('.chip[data-filter-group]').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const g = chip.dataset.filterGroup;
-      document.querySelectorAll(`.chip[data-filter-group="${g}"]`).forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      const val = chip.dataset.filter;
-      const target = chip.dataset.filterTarget;
-      document.querySelectorAll(`[data-filterable="${target}"]`).forEach(item =>
-        item.style.display = (val === 'all' || item.dataset.filterValue === val) ? '' : 'none');
     });
   });
 }

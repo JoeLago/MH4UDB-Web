@@ -9,7 +9,7 @@ export async function renderWyporium() {
                        JOIN items ii ON w.item_in_id = ii._id
                        JOIN items io ON w.item_out_id = io._id
                        LEFT JOIN quests q ON w.unlock_quest_id = q._id
-                       ORDER BY ii.name`);
+                       ORDER BY io.name`);
 
   const html = `
     <div class="search-wrap">
