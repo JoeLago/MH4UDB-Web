@@ -1,7 +1,14 @@
 # MH4U Database — PWA
 
 Static PWA porting the iOS app at `~/dev/mh4udb` (read-only reference).
-Serve with: `python3 -m http.server 8080` → http://localhost:8080
+
+## Build
+Before serving, generate the database from the SQL dump:
+  make
+Then serve with:
+  python3 -m http.server 8080 → http://localhost:8080
+
+`mh4u.db` is a build artifact (gitignored). `mh4u.sql` is the diffable source.
 
 ## Stack
 - Vanilla JS ES modules, no build step

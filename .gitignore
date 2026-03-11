@@ -23,3 +23,6 @@ node_modules/
 # Env / secrets
 .env
 .env.local
+
+# Generated build artifacts
+mh4u.db
