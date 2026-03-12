@@ -1,6 +1,6 @@
 # MH4U Database — PWA
 
-Static PWA porting the iOS app at `~/dev/mh4udb` (read-only reference).
+Static PWA for browsing Monster Hunter 4 Ultimate game data.
 
 ## Build
 Before serving, generate the database from the SQL dump:
