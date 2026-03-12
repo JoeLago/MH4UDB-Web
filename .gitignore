@@ -26,3 +26,6 @@ node_modules/
 
 # Generated build artifacts
 mh4u.db
+
+# Claude Code local settings
+.claude/settings.local.json
