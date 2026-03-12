@@ -154,7 +154,7 @@ function showFKOverlay(anchorEl, currentVal, fkInfo, fkCache, onSelect) {
 
       const idSpan = document.createElement('span');
       idSpan.className = 'fk-item-id';
-      idSpan.textContent = `#${e.id}`;
+      idSpan.textContent = e.id;
 
       item.appendChild(nameSpan);
       item.appendChild(idSpan);

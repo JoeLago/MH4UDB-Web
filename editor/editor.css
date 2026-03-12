@@ -36,10 +36,11 @@ body {
 
 #app {
   display: grid;
-  grid-template-columns: var(--sidebar-width, 240px) 4px 1fr;
+  grid-template-columns: var(--sidebar-width, 180px) 4px 1fr;
   height: 100vh;
   overflow: hidden;
 }
+
 
 #resize-handle {
   background: var(--border);
@@ -64,9 +65,13 @@ body {
 }
 
 #sidebar-header {
-  padding: 14px 16px;
+  padding: 10px 12px 10px 16px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 #sidebar-header h1 {
@@ -81,6 +86,7 @@ body {
   flex: 1;
   padding: 8px 0;
 }
+
 
 .table-group {
   margin-bottom: 4px;
@@ -624,4 +630,41 @@ textarea {
   border: 1px solid rgba(192,57,43,0.3);
   border-radius: var(--radius);
   margin: 8px;
+}
+
+/* Mobile: one pane at a time */
+@media (max-width: 767px) {
+  #app {
+    grid-template-columns: 1fr;
+  }
+
+  #resize-handle {
+    display: none;
+  }
+
+  /* Default: show sidebar, hide main */
+  #main {
+    display: none;
+  }
+
+  /* Grid view: hide sidebar, show main */
+  #app.grid-view #sidebar {
+    display: none;
+  }
+
+  #app.grid-view #main {
+    display: flex;
+  }
+
+  #back-btn {
+    display: flex !important;
+  }
+
+  #search-input {
+    width: 120px;
+  }
+
+  #export-btn {
+    display: none;
+  }
 }

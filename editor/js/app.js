@@ -125,10 +125,19 @@ function selectTable(tableName) {
   document.getElementById('add-btn').disabled = false;
   document.getElementById('pagination').style.display = 'flex';
 
+  // On mobile, switch to grid view
+  if (window.innerWidth < 768) {
+    document.getElementById('app').classList.add('grid-view');
+  }
+
   refreshGrid();
 }
 
 function initToolbar() {
+  document.getElementById('back-btn').addEventListener('click', () => {
+    document.getElementById('app').classList.remove('grid-view');
+  });
+
   const searchInput = document.getElementById('search-input');
   let searchTimer;
   searchInput.addEventListener('input', () => {
@@ -148,6 +157,10 @@ function initToolbar() {
   });
 
   document.getElementById('export-btn').addEventListener('click', () => {
+    exportSQL();
+  });
+
+  document.getElementById('export-btn-sidebar').addEventListener('click', () => {
     exportSQL();
   });
 

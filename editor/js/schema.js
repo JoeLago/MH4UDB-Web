@@ -299,10 +299,6 @@ export const SCHEMA = {
 // Table groups for sidebar display
 export const TABLE_GROUPS = [
   {
-    label: 'Core',
-    tables: ['items', 'locations', 'skill_trees', 'felyne_skills']
-  },
-  {
     label: 'Monsters',
     tables: ['monsters', 'monster_ailment', 'monster_damage', 'monster_habitat',
              'monster_status', 'monster_weakness']
@@ -313,18 +309,18 @@ export const TABLE_GROUPS = [
              'arena_quests', 'arena_rewards', 'hunting_rewards']
   },
   {
-    label: 'Crafting',
-    tables: ['weapons', 'armor', 'decorations', 'components', 'combining',
+    label: 'Items',
+    tables: ['items', 'weapons', 'armor', 'decorations', 'components', 'combining',
              'item_to_skill_tree']
   },
   {
     label: 'Skills',
-    tables: ['skills', 'food_combos', 'ingredients']
+    tables: ['skill_trees', 'skills', 'food_combos', 'ingredients']
   },
   {
     label: 'Other',
-    tables: ['gathering', 'horn_melodies', 'veggie_elder',
-             'wyporium', 'wishlist', 'asb_sets']
+    tables: ['locations', 'felyne_skills', 'gathering', 'horn_melodies',
+             'veggie_elder', 'wyporium', 'wishlist', 'asb_sets']
   }
 ];
 
