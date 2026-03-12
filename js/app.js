@@ -73,7 +73,7 @@ async function handleRoute({ section, id }) {
   setActiveNav(section || 'home');
 
   const backBtn = document.getElementById('back-btn');
-  backBtn.style.display = id ? '' : 'none';
+  backBtn.style.display = (section && section !== 'home') ? '' : 'none';
 
   const content = document.getElementById('content');
   content.innerHTML = '<div class="loading-inline">Loading…</div>';
