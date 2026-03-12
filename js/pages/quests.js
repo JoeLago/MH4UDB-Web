@@ -106,7 +106,7 @@ export async function renderQuestDetail(id) {
   try {
     rewards = query(`SELECT qr.*, i.name as item_name, i.icon_name FROM quest_rewards qr
                       JOIN items i ON qr.item_id = i._id WHERE qr.quest_id = ?
-                      ORDER BY qr.rank, qr.reward_slot, qr.percentage DESC`, [id]);
+                      ORDER BY qr.reward_slot, qr.percentage DESC`, [id]);
   } catch(e) {}
 
   const prereqs = query(`SELECT q2.name, q2._id FROM quest_prereqs qp
@@ -194,8 +194,7 @@ export async function renderQuestDetail(id) {
             <div class="list-item" data-nav="/items/${r.item_id}">
               ${img(itemIconPath(r.icon_name), r.item_name)}
               <div class="list-item-info">
-                <div class="list-item-name">${esc(r.item_name)}</div>
-                <div class="list-item-sub">x${r.stack_size || 1}</div>
+                <div class="list-item-name">${esc(r.item_name)}${r.stack_size > 1 ? ` <span style="color:var(--text-muted);font-weight:normal">x${r.stack_size}</span>` : ''}</div>
               </div>
               <div style="text-align:right;min-width:48px">
                 <div style="font-weight:600;color:${pctColor(r.percentage)}">${r.percentage}%</div>
@@ -265,8 +264,7 @@ export async function renderArenaQuestDetail(id) {
           <div class="list-item" data-nav="/items/${r.item_id}">
             ${img(itemIconPath(r.icon_name), r.item_name)}
             <div class="list-item-info">
-              <div class="list-item-name">${esc(r.item_name)}</div>
-              <div class="list-item-sub">x${r.stack_size || 1}</div>
+              <div class="list-item-name">${esc(r.item_name)}${r.stack_size > 1 ? ` <span style="color:var(--text-muted);font-weight:normal">x${r.stack_size}</span>` : ''}</div>
             </div>
             <div style="text-align:right;min-width:48px">
               <div style="font-weight:600;color:${pctColor(r.percentage)}">${r.percentage}%</div>

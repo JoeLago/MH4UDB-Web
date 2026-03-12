@@ -22,11 +22,13 @@ export async function renderDecorationList() {
       <div class="chip" data-filter="3" data-filter-group="slots" data-filter-target="decs">3 Slots</div>
     </div>
     <div class="card">
-      ${decs.map(d => `
+      ${decs.map((d, i) => `
         <div class="list-item"
           data-nav="/decorations/${d._id}"
           data-searchable="decs"
-          data-searchtext="${esc(d.name)}"
+          data-searchname="${esc(d.name)}"
+          data-searchtext="${esc(d.name + (d.skills_preview ? ' ' + d.skills_preview : ''))}"
+          data-index="${i}"
           data-filterable="decs"
           data-filter-value="${d.num_slots}">
           ${img(itemIconPath(d.icon_name), d.name)}
@@ -89,7 +91,6 @@ export async function renderDecorationDetail(id) {
             ${img(itemIconPath(c.icon_name), c.name)}
             <div class="list-item-info">
               <div class="list-item-name">${esc(c.name)}</div>
-              <div class="list-item-sub">${esc(c.type)}</div>
             </div>
             <span style="font-weight:600">×${c.quantity}</span>
           </div>`).join('')}

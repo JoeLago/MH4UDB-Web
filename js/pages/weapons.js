@@ -1,6 +1,40 @@
 import { query, queryOne } from '../db.js';
 import { esc, weaponIconPath, img, elementBadge, elementIcon, slots, sharpnessBar, groupBy } from './utils.js';
 
+const COATING_ORDER = ['Power','Poison','Para','Sleep','C. Range','Paint','Exhaust','Blast'];
+const COATING_COLORS = {
+  'Power':   '#e67e22',
+  'Poison':  '#8e44ad',
+  'Para':    '#f39c12',
+  'Sleep':   '#3498db',
+  'C. Range':'#27ae60',
+  'Paint':   '#aaaaaa',
+  'Exhaust': '#c0392b',
+  'Blast':   '#e74c3c',
+};
+
+function bowChargesHtml(charges) {
+  const parts = charges.split('|');
+  return `<div class="bow-charges">${parts.map((p, i) => `
+    <div class="bow-charge-pill">
+      <span class="bow-charge-num">Lv${i + 1}</span>
+      <span class="bow-charge-name">${esc(p.replace('*',''))}</span>
+      ${p.endsWith('*') ? '<span class="bow-charge-arc">ARC</span>' : ''}
+    </div>`).join('')}</div>`;
+}
+
+function bowCoatingsHtml(coatings) {
+  const parts = coatings.split('|');
+  return `<div class="bow-coatings">${COATING_ORDER.map((name, i) => {
+    const val = parts[i] || '-';
+    const active = val !== '-';
+    const color = COATING_COLORS[name] || '#aaa';
+    return `<div class="bow-coating${active ? ' bow-coating-active' : ''}" style="${active ? `--coat-color:${color}` : ''}">
+      <span class="bow-coating-name">${name}</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+
 const NOTE_COLORS = { W:'#aaa', B:'#3a8fd9', R:'#d9343a', G:'#27ae60', Y:'#e0c020', C:'#17b8c8', P:'#9b59b6', O:'#e67e22' };
 function hornNoteCircles(notes) {
   return [...notes].map(ch => {
@@ -78,8 +112,8 @@ export async function renderWeaponDetail(idOrType) {
       ${w.defense ? `<div class="stat-row"><span class="stat-label">Defense Bonus</span><span class="stat-value">+${w.defense}</span></div>` : ''}
       ${w.shelling_type ? `<div class="stat-row"><span class="stat-label">Shelling</span><span class="stat-value">${esc(w.shelling_type)}</span></div>` : ''}
       ${w.phial ? `<div class="stat-row"><span class="stat-label">Phial</span><span class="stat-value">${esc(w.phial)}</span></div>` : ''}
-      ${w.charges ? `<div class="stat-row"><span class="stat-label">Charges</span><span class="stat-value">${esc(w.charges)}</span></div>` : ''}
-      ${w.coatings ? `<div class="stat-row"><span class="stat-label">Coatings</span><span class="stat-value">${esc(w.coatings)}</span></div>` : ''}
+      ${w.charges ? `<div class="stat-row stat-row-block"><span class="stat-label">Charges</span>${bowChargesHtml(w.charges)}</div>` : ''}
+      ${w.coatings ? `<div class="stat-row stat-row-block"><span class="stat-label">Coatings</span>${bowCoatingsHtml(w.coatings)}</div>` : ''}
       ${w.horn_notes ? `<div class="stat-row"><span class="stat-label">Horn Notes</span><span class="stat-value">${hornNoteCircles(w.horn_notes)}</span></div>` : ''}
       ${w.recoil ? `<div class="stat-row"><span class="stat-label">Recoil</span><span class="stat-value">${esc(w.recoil)}</span></div>` : ''}
       ${w.reload_speed ? `<div class="stat-row"><span class="stat-label">Reload</span><span class="stat-value">${esc(w.reload_speed)}</span></div>` : ''}

@@ -532,6 +532,43 @@ tr.hitzone-state-header:hover td { background: var(--surface2); }
 .detail-header-name { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
 .detail-header-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 
+/* ─── Bow Charges & Coatings ─────────────────────────────────── */
+.stat-row-block { flex-direction: column; align-items: flex-start; gap: 8px; padding-bottom: 12px; }
+.stat-row-block .stat-label { margin-bottom: 0; }
+
+.bow-charges { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.bow-charge-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2); border-radius: 6px;
+  padding: 6px 10px;
+}
+.bow-charge-num {
+  font-size: 11px; font-weight: 700; color: var(--text-dim);
+  background: var(--surface3); border-radius: 4px;
+  padding: 1px 5px; min-width: 28px; text-align: center;
+}
+.bow-charge-name { font-size: 13px; color: var(--text); flex: 1; }
+.bow-charge-arc {
+  font-size: 10px; font-weight: 700; color: var(--gold);
+  background: rgba(240,165,0,0.15); border-radius: 4px;
+  padding: 1px 5px; letter-spacing: 0.05em;
+}
+
+.bow-coatings {
+  display: flex; flex-wrap: wrap; gap: 6px; width: 100%;
+}
+.bow-coating {
+  padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  background: var(--surface2); color: var(--text-dim);
+  border: 1.5px solid transparent;
+}
+.bow-coating-active {
+  background: color-mix(in srgb, var(--coat-color) 15%, transparent);
+  color: var(--coat-color);
+  border-color: color-mix(in srgb, var(--coat-color) 35%, transparent);
+}
+.bow-coating-name { display: block; }
+
 /* ─── Sharpness Bar ──────────────────────────────────────────── */
 .note-circle {
   display: inline-flex; align-items: center; justify-content: center;
@@ -812,7 +849,7 @@ tr.hitzone-state-header:hover td { background: var(--surface2); }
 .combo-skills { font-size: 12px; color: var(--text-muted); }
 
 /* ─── Wyporium / Veggie Elder ───────────────────────────────── */
-.trade-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border2); cursor: pointer; }
+.trade-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border2); cursor: pointer; flex-wrap: wrap; }
 .trade-row:last-child { border-bottom: none; }
 .trade-row:hover { background: var(--surface2); }
 .trade-row img { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
@@ -820,6 +857,15 @@ tr.hitzone-state-header:hover td { background: var(--surface2); }
 .trade-name { font-size: 14px; font-weight: 500; }
 .trade-sub { font-size: 12px; color: var(--text-muted); }
 .trade-arrow-big { font-size: 20px; color: var(--gold); flex-shrink: 0; }
+.trade-unlock-quest { width: 100%; display: flex; align-items: center; gap: 6px; padding-top: 6px; cursor: pointer; font-size: 12px; }
+.trade-unlock-label { color: var(--text-muted); font-size: 11px; }
+.trade-unlock-name { color: var(--text); }
+.trade-unlock-quest:hover .trade-unlock-name { color: var(--gold); }
+.quest-hub { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.03em; }
+.quest-hub--caravan { background: #5a3a00; color: #f0a500; }
+.quest-hub--guild   { background: #0d2e4e; color: #4fa8d5; }
+.quest-hub--event   { background: #3a0d3a; color: #c97de8; }
+.quest-stars { color: var(--gold); font-size: 10px; }
 
 /* ─── Monster weakness stars ─────────────────────────────────── */
 .eff-3  { color: var(--fire); font-weight: 700; }

@@ -15,9 +15,9 @@ function cookBadge(cooked) {
 
 export async function renderCanteen() {
   const combos = query(`SELECT fc.*,
-                         fs1.name as skill1_name, fs1.description as skill1_desc,
-                         fs2.name as skill2_name, fs2.description as skill2_desc,
-                         fs3.name as skill3_name, fs3.description as skill3_desc
+                         fs1.skill_name as skill1_name, fs1.description as skill1_desc,
+                         fs2.skill_name as skill2_name, fs2.description as skill2_desc,
+                         fs3.skill_name as skill3_name, fs3.description as skill3_desc
                          FROM food_combos fc
                          LEFT JOIN felyne_skills fs1 ON fc.skill1_id = fs1._id
                          LEFT JOIN felyne_skills fs2 ON fc.skill2_id = fs2._id
@@ -45,7 +45,7 @@ export async function renderCanteen() {
       </div>
       ${bonuses.length > 1 ? `
       <div class="filter-bar">
-        ${bonuses.map(b => `<div class="chip ${b === 'All' ? 'active' : ''}" data-filter="${esc(b)}" data-filter-group="bonus" data-filter-target="canteen-combos">${esc(b)}</div>`).join('')}
+        ${bonuses.map(b => `<div class="chip ${b === 'All' ? 'active' : ''}" data-filter="${b === 'All' ? 'all' : esc(b)}" data-filter-group="bonus" data-filter-target="canteen-combos">${esc(b)}</div>`).join('')}
       </div>` : ''}
       <div style="display:flex;flex-direction:column;gap:8px">
         ${Object.entries(byIngr).map(([ingr, items]) => `

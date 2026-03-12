@@ -234,8 +234,7 @@ export async function renderMonsterDetail(id) {
                 <div class="list-item" data-nav="/items/${r.item_id}">
                   ${img('icons/icons_items/' + r.icon_name, r.name)}
                   <div class="list-item-info">
-                    <div class="list-item-name">${esc(r.name)}</div>
-                    <div class="list-item-sub">x${r.stack_size}</div>
+                    <div class="list-item-name">${esc(r.name)}${r.stack_size > 1 ? ` <span style="color:var(--text-muted);font-weight:normal">x${r.stack_size}</span>` : ''}</div>
                   </div>
                   <div style="text-align:right;min-width:48px">
                     <div style="font-weight:600">${r.percentage}%</div>

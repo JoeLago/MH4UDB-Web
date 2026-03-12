@@ -147,7 +147,10 @@ export async function renderLocationDetail(id) {
           <div class="list-item" data-nav="/quests/${q._id}">
             <div class="list-item-info">
               <div class="list-item-name">${esc(q.name)}</div>
-              <div class="list-item-sub">${esc(q.hub)} · ${'★'.repeat(q.stars)}</div>
+              <div class="list-item-sub" style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                <span class="quest-hub quest-hub--${esc(q.hub.toLowerCase())}">${esc(q.hub)}</span>
+                <span class="quest-stars">${q.stars}★</span>
+              </div>
             </div>
             <span class="list-arrow">›</span>
           </div>`).join('')}

@@ -144,12 +144,14 @@ export async function renderItemDetail(id) {
               <div class="list-item-name">${esc(s.monster_name)}</div>
               <div class="list-item-sub" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:2px">
                 ${conditionBadge(s.condition)}
-                <span style="color:var(--text-muted)">×${s.stack_size}</span>
               </div>
             </div>
-            <div style="text-align:right;min-width:48px">
-              <div style="font-weight:600">${s.percentage}%</div>
-              ${pctBar(s.percentage)}
+            <div style="display:flex;align-items:center;gap:16px;flex-shrink:0">
+              <span style="color:var(--text-muted);font-size:14px;font-weight:600;min-width:28px;text-align:right">×${s.stack_size}</span>
+              <div style="min-width:44px;text-align:center">
+                <div style="font-weight:600;font-size:14px">${s.percentage}%</div>
+                ${pctBar(s.percentage)}
+              </div>
             </div>
           </div>`).join('')).join('')}
       </div>
@@ -184,6 +186,31 @@ export async function renderItemDetail(id) {
     </div>`;
     })() : ''}
 
+    ${questRewards.length ? `
+    <div class="detail-section">
+      <div class="detail-section-title">Quest Rewards</div>
+      <div class="card">
+        ${questRewards.map(q => `
+          <div class="list-item" data-nav="/quests/${q.quest_id}">
+            <div class="list-item-info">
+              <div class="list-item-name">${esc(q.quest_name)}</div>
+              <div class="list-item-sub" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">
+                <span class="badge ${q.hub === 'Guild' ? 'badge-blue' : q.hub === 'Event' ? 'badge-gold' : 'badge-green'}">${esc(q.hub)}</span>
+                ${q.stars ? `<span class="badge badge-default">${q.stars}★</span>` : ''}
+                <span class="badge ${q.reward_slot === 'A' ? 'badge-default' : q.reward_slot === 'B' ? 'badge-orange' : 'badge-red'}">Slot ${esc(q.reward_slot)}</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;flex-shrink:0">
+              <span style="color:var(--text-muted);font-size:14px;font-weight:600;min-width:28px;text-align:right">×${q.stack_size}</span>
+              <div style="min-width:44px;text-align:center">
+                <div style="font-weight:600;font-size:14px">${q.percentage}%</div>
+                ${pctBar(q.percentage)}
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
     ${craftingUses.length ? `
     <div class="detail-section">
       <div class="detail-section-title">Used To Craft</div>
@@ -207,31 +234,6 @@ export async function renderItemDetail(id) {
             <span style="color:var(--text-muted);font-size:13px;font-weight:600;white-space:nowrap">×${c.quantity}</span>
           </div>`;
         }).join('')}
-      </div>
-    </div>` : ''}
-
-    ${questRewards.length ? `
-    <div class="detail-section">
-      <div class="detail-section-title">Quest Rewards</div>
-      <div class="card">
-        ${questRewards.map(q => `
-          <div class="list-item" data-nav="/quests/${q.quest_id}">
-            <div class="list-item-info">
-              <div class="list-item-name">${esc(q.quest_name)}</div>
-              <div class="list-item-sub" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">
-                <span class="badge ${q.hub === 'Guild' ? 'badge-blue' : q.hub === 'Event' ? 'badge-gold' : 'badge-green'}">${esc(q.hub)}</span>
-                ${q.stars ? `<span class="badge badge-default">${q.stars}★</span>` : ''}
-                <span class="badge ${q.reward_slot === 'A' ? 'badge-default' : q.reward_slot === 'B' ? 'badge-orange' : 'badge-red'}">Slot ${esc(q.reward_slot)}</span>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;text-align:right">
-              ${q.stack_size > 1 ? `<span style="color:var(--text-muted);font-size:13px">×${q.stack_size}</span>` : ''}
-              <div>
-                <div style="font-weight:600;font-size:14px">${q.percentage}%</div>
-                ${pctBar(q.percentage)}
-              </div>
-            </div>
-          </div>`).join('')}
       </div>
     </div>` : ''}`;
 

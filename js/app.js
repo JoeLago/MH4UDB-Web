@@ -124,7 +124,7 @@ function bindPageEvents(section, id) {
     document.querySelectorAll(`[data-filterable="${target}"]`).forEach(item => {
       const visible = Object.entries(filters).every(([group, val]) => {
         if (val === 'all') return true;
-        if (group === 'rank') return item.dataset.filterRank === val;
+        if (group === 'rank') return (item.dataset.filterRank ?? item.dataset.filterValue) === val;
         return item.dataset.filterValue === val;
       });
       item.style.display = visible ? '' : 'none';
@@ -173,12 +173,36 @@ function bindPageEvents(section, id) {
       const q = input.value.toLowerCase();
       const key = input.dataset.search;
       if (q) {
-        document.querySelectorAll(`[data-searchable="${key}"]`).forEach(item => {
-          const text = (item.dataset.searchtext || item.textContent).toLowerCase();
-          item.style.display = text.includes(q) ? '' : 'none';
-        });
+        const items = [...document.querySelectorAll(`[data-searchable="${key}"]`)];
+        const hasPriority = items.some(i => i.dataset.searchname !== undefined);
+        if (hasPriority) {
+          const nameMatches = [], skillMatches = [];
+          items.forEach(item => {
+            const text = (item.dataset.searchtext || item.textContent).toLowerCase();
+            const name = item.dataset.searchname.toLowerCase();
+            if (text.includes(q)) {
+              item.style.display = '';
+              (name.includes(q) ? nameMatches : skillMatches).push(item);
+            } else {
+              item.style.display = 'none';
+            }
+          });
+          [...nameMatches, ...skillMatches].forEach(item => item.parentNode.appendChild(item));
+        } else {
+          items.forEach(item => {
+            const text = (item.dataset.searchtext || item.textContent).toLowerCase();
+            item.style.display = text.includes(q) ? '' : 'none';
+          });
+        }
       } else {
-        document.querySelectorAll(`[data-searchable="${key}"]`).forEach(item => item.style.display = '');
+        const items = [...document.querySelectorAll(`[data-searchable="${key}"]`)];
+        const hasPriority = items.some(i => i.dataset.searchname !== undefined);
+        if (hasPriority) {
+          items.sort((a, b) => +a.dataset.index - +b.dataset.index)
+               .forEach(item => { item.style.display = ''; item.parentNode.appendChild(item); });
+        } else {
+          items.forEach(item => item.style.display = '');
+        }
         applyFilters(key);
       }
     });

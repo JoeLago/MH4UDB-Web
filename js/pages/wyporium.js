@@ -4,12 +4,12 @@ import { esc, itemIconPath, img } from './utils.js';
 export async function renderWyporium() {
   const rows = query(`SELECT w._id, ii.name as item_in, ii.icon_name as icon_in, ii._id as id_in,
                        io.name as item_out, io.icon_name as icon_out, io._id as id_out,
-                       q.name as quest_name, q._id as quest_id
+                       q.name as quest_name, q._id as quest_id, q.hub as quest_hub, q.stars as quest_stars
                        FROM wyporium w
                        JOIN items ii ON w.item_in_id = ii._id
                        JOIN items io ON w.item_out_id = io._id
                        LEFT JOIN quests q ON w.unlock_quest_id = q._id
-                       ORDER BY io.name`);
+                       ORDER BY q.hub, q.stars, io.name`);
 
   const html = `
     <div class="search-wrap">
@@ -23,16 +23,19 @@ export async function renderWyporium() {
           data-searchtext="${esc(r.item_in)} ${esc(r.item_out)}">
           <div data-nav="/items/${r.id_in}" style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer">
             ${img(itemIconPath(r.icon_in), r.item_in)}
-            <div>
-              <div style="font-size:14px;font-weight:500">${esc(r.item_in)}</div>
-              ${r.quest_name ? `<div style="font-size:11px;color:var(--text-muted)">Unlock: ${esc(r.quest_name)}</div>` : ''}
-            </div>
+            <div style="font-size:14px;font-weight:500">${esc(r.item_in)}</div>
           </div>
           <span class="trade-arrow-big">→</span>
           <div data-nav="/items/${r.id_out}" style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer">
             ${img(itemIconPath(r.icon_out), r.item_out)}
             <div style="font-size:14px;font-weight:600;color:var(--gold)">${esc(r.item_out)}</div>
           </div>
+          ${r.quest_name ? `<div data-nav="/quests/${r.quest_id}" class="trade-unlock-quest">
+            <span class="trade-unlock-label">Unlock</span>
+            <span class="quest-hub quest-hub--${esc(r.quest_hub.toLowerCase())}">${esc(r.quest_hub)}</span>
+            <span class="quest-stars">${r.quest_stars}★</span>
+            <span class="trade-unlock-name">${esc(r.quest_name)}</span>
+          </div>` : ''}
         </div>`).join('')}
     </div>`;
 
