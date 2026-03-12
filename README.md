@@ -2,7 +2,7 @@
 
 A fan-made web app for browsing [Monster Hunter 4 Ultimate](https://en.wikipedia.org/wiki/Monster_Hunter_4) game data — monsters, weapons, armor, quests, items, and more. Works offline as a Progressive Web App.
 
-**[Open the app →](https://joelago.github.io/mh4udb-webv2/)**
+**[Open the app →](https://joelago.github.io/MH4UDB-Web/)**
 
 ---
 
@@ -12,7 +12,7 @@ If you spot incorrect data (wrong stats, missing items, typos, etc.), you can fi
 
 ### How to submit a data fix
 
-1. **Open the [DB Editor](https://joelago.github.io/mh4udb-webv2/editor/)** — a browser-based spreadsheet for the game database.
+1. **Open the [DB Editor](https://joelago.github.io/MH4UDB-Web/editor/)** — a browser-based spreadsheet for the game database.
 
 2. **Load the current database** — the editor loads `mh4u.db` automatically from the site. You'll see a list of tables in the sidebar (monsters, weapons, armor, etc.).
 
@@ -20,7 +20,7 @@ If you spot incorrect data (wrong stats, missing items, typos, etc.), you can fi
 
 4. **Export the SQL dump** — click the **Export SQL** button in the top toolbar. This downloads a file called `mh4u.sql`.
 
-5. **Submit a Pull Request** — go to the [upload page](https://github.com/joelago/mh4udb-webv2/upload/main), drag in your `mh4u.sql` file, add a short description of what you changed, and click **Propose changes** → **Create pull request**.
+5. **Submit a Pull Request** — go to the [upload page](https://github.com/joelago/MH4UDB-Web/upload/main), drag in your `mh4u.sql` file, add a short description of what you changed, and click **Propose changes** → **Create pull request**.
 
 That's it! A maintainer will review and merge your fix.
 
